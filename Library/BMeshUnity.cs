@@ -47,6 +47,20 @@ public class BMeshUnity
      */
     public static void SetInMeshFilter(BMesh mesh, MeshFilter mf)
     {
+        var unityMesh = GenerateUnityMesh(mesh);
+
+        // Fix an issue when renderer has more materials than there are submeshes
+        var renderer = mf.GetComponent<MeshRenderer>();
+        if (renderer)
+        {
+            unityMesh.subMeshCount = Mathf.Max(unityMesh.subMeshCount, renderer.sharedMaterials.Length);
+        }
+
+        mf.mesh = unityMesh;
+    }
+
+    public static Mesh GenerateUnityMesh(BMesh mesh)
+    {
         // Points
         Vector2[] uvs = null;
         Vector2[] uvs2 = null;
@@ -145,7 +159,6 @@ public class BMeshUnity
 
         // Apply mesh
         Mesh unityMesh = new Mesh();
-        mf.mesh = unityMesh;
         unityMesh.vertices = points;
         if (uvs != null) unityMesh.uv = uvs;
         if (uvs2 != null) unityMesh.uv2 = uvs2;
@@ -153,14 +166,7 @@ public class BMeshUnity
         if (colors != null) unityMesh.colors = colors;
         unityMesh.subMeshCount = triangles.Length;
 
-        // Fix an issue when renderer has more materials than there are submeshes
-        var renderer = mf.GetComponent<MeshRenderer>();
-        if (renderer)
-        {
-            unityMesh.subMeshCount = Mathf.Max(unityMesh.subMeshCount, renderer.sharedMaterials.Length);
-        }
-
-        for (int mat = 0; mat  < triangles.Length; ++mat)
+        for (int mat = 0; mat < triangles.Length; ++mat)
         {
             unityMesh.SetTriangles(triangles[mat], mat);
         }
@@ -169,6 +175,8 @@ public class BMeshUnity
         {
             unityMesh.RecalculateNormals();
         }
+
+        return unityMesh;
     }
 
     #endregion
